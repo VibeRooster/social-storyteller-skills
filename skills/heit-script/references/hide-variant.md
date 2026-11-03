@@ -1,7 +1,3 @@
 # H.I.D.E. (story-led variant)
-- **Hook**
-- **Intrigue**: a 1–2 sentence story.
-- **Deliver** value.
-- **Exit** action.
 
-One sentence per shot (wide / mid / close). Loop the ending back to the opening. Use for story-led videos; use HEIT for demos.
+H.I.D.E. (Hook, Intrigue, Deliver value, Exit with action) is now its own skill: see [skills/hide-framework](../../hide-framework/SKILL.md). Use it for story-led short videos, and use HEIT for timed demos and explainers.

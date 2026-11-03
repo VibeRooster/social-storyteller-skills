@@ -6,6 +6,7 @@ Agent Skills for producing social media content: scripting, hooks, short-form vi
 | Skill | Use it when |
 |---|---|
 | [heit-script](skills/heit-script) | Writing a timed HEIT explainer/demo video script |
+| [hide-framework](skills/hide-framework) | Story-led short-form script with H.I.D.E. (Hook, Intrigue, Deliver value, Exit with action) and shot plan |
 | [hook-writing](skills/hook-writing) | Drafting and A/B testing hooks |
 | [reel-construction](skills/reel-construction) | Planning, editing, and QA-ing a vertical video series |
 | [burned-captions](skills/burned-captions) | Adding karaoke-style burned-in captions |

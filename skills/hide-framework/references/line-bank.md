@@ -27,3 +27,6 @@ Get your viewer to do something (like a post, follow you, buy something, DM you)
 2. Do you agree?
 3. Try this tip and let me know how you get on.
 4. Tap follow for more tips like this.
+
+---
+Source: adapted from [Brand Video Pro](https://brandvideo.pro).

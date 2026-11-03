@@ -10,3 +10,6 @@ This is the source template's own sample.
 | Exit with action | Shot 1 (wide) | So, if you're a [Business Coach] trying to [build your business], follow me for more content like this. |
 
 The Exit returns to Shot 1, the same framing as the Hook.
+
+---
+Source: adapted from [Brand Video Pro](https://brandvideo.pro).

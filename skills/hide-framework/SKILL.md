@@ -22,3 +22,7 @@ A fill-in-the-blank template for short videos built to get views. Pick one line 
 
 ## When to use something else
 H.I.D.E. is for story-led clips. For timed explainers and demos, use [heit-script](../heit-script).
+
+## Credit
+
+The H.I.D.E. framework, line bank, and shooting tips are adapted from [Brand Video Pro](https://brandvideo.pro).

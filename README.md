@@ -17,6 +17,7 @@ Agent Skills for producing social media content: scripting, hooks, short-form vi
 | [voice](skills/voice) | Applying an author's voice guide |
 | [publish-html-hatch](skills/publish-html-hatch) | Publishing HTML to a public URL with the Hatch MCP |
 | [social-visuals](skills/social-visuals) | Quote cards, carousels, thumbnails, overlays |
+| [vibe-prompter-scripts](skills/vibe-prompter-scripts) | Drafting multi-piece Reel filming scripts as one VibePrompter `.md` (Overview WHY + five HEIT details) |
 
 ## Install
 Copy a skill folder into your agent's skills directory:

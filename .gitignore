@@ -1,0 +1,13 @@
+.DS_Store
+__pycache__/
+*.pyc
+node_modules/
+
+# Installed by `npx skills` into this checkout. Authored skills live in skills/.
+skills-lock.json
+.agents/skills/
+.claude/skills/
+.codex/skills/
+.cursor/skills/
+.gemini/skills/
+.copilot/skills/

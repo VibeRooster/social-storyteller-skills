@@ -1,8 +1,43 @@
-# Social Storyteller Skills
+# social-storyteller-skills
 
-Agent skills for social storytelling, packaged with the [Agent Skills](https://agentskills.io/specification) format. One catalog installs into Cursor, Claude Code, Codex, GitHub Copilot, Gemini CLI, and the rest of the agents supported by the [skills CLI](https://github.com/vercel-labs/skills).
+Agent Skills for producing social media content: scripting, hooks, short-form video, captions, posts, visuals, and HTML publishing.
 
-Published skills live in [`skills/`](skills/). None are published yet. Add one with `python3 scripts/skills.py new <skill-name>`, then install from this repository:
+## Skills
+| Skill | Use it when |
+|---|---|
+| [heit-script](skills/heit-script) | Writing a timed HEIT explainer/demo video script |
+| [hide-framework](skills/hide-framework) | Story-led short-form script with H.I.D.E. (Hook, Intrigue, Deliver value, Exit with action) and shot plan |
+| [hook-writing](skills/hook-writing) | Drafting and A/B testing hooks |
+| [reel-construction](skills/reel-construction) | Planning, editing, and QA-ing a vertical video series |
+| [burned-captions](skills/burned-captions) | Adding karaoke-style burned-in captions |
+| [linkedin-post](skills/linkedin-post) | Writing a long-form LinkedIn post |
+| [social-captions](skills/social-captions) | Per-platform captions and hashtags |
+| [cta-library](skills/cta-library) | Choosing a CTA by funnel stage |
+| [proof-points](skills/proof-points) | Sourcing and phrasing stats |
+| [voice](skills/voice) | Applying an author's voice guide |
+| [publish-html-hatch](skills/publish-html-hatch) | Publishing HTML to a public URL with the Hatch MCP |
+| [social-visuals](skills/social-visuals) | Quote cards, carousels, thumbnails, overlays |
+| [vibe-prompter-scripts](skills/vibe-prompter-scripts) | Drafting multi-piece Reel filming scripts as one VibePrompter `.md` (Overview WHY + five HEIT details) |
+
+## Install
+Copy a skill folder into your agent's skills directory:
+
+```bash
+git clone https://github.com/VibeRooster/social-storyteller-skills
+cp -r social-storyteller-skills/skills/heit-script <your-agent-skills-dir>/
+```
+
+Each skill is a folder with a `SKILL.md` (YAML frontmatter `name` + `description`) and an optional `references/` folder.
+
+## Contributing
+1. Copy `templates/skill-template/` to `skills/<your-skill-name>/`.
+2. Fill in the frontmatter and steps; put long material in `references/`.
+3. Keep it generic: no secrets, tokens, personal IDs, or client details.
+4. Open a pull request.
+
+
+## License
+See [LICENSE](LICENSE).
 
 ```bash
 npx skills add VibeRooster/social-storyteller-skills
@@ -15,17 +50,6 @@ npx skills add VibeRooster/social-storyteller-skills --skill <skill-name> -a cur
 ```
 
 Use `-g` to install for every project. Agent names and install paths are listed in the [skills CLI agent table](https://github.com/vercel-labs/skills/blob/main/docs/agents.md).
-
-## Repository layout
-
-```text
-skills/<skill-name>/SKILL.md     the catalog installers discover
-templates/skill-template/         copy source for a new skill
-scripts/skills.py                 create and validate skills
-AGENTS.md                         rules for agents editing this repo
-```
-
-Each skill is a directory. `SKILL.md` holds the instructions. Optional `references/`, `assets/`, and `scripts/` sit beside it and are loaded only when the instructions point at them.
 
 Check the catalog locally:
 

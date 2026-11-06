@@ -1,0 +1,34 @@
+---
+name: your-skill-name
+description: Replace this with a third-person description of what the skill does and when to use it, including the words a person would use to ask for the task.
+license: MIT
+metadata:
+  author: VibeRooster
+  version: "0.1.0"
+---
+
+# Your Skill Name
+
+## Do this
+
+1. Identify the audience, the platform, and the single outcome the piece must achieve.
+2. Follow the procedure. Open a linked file only when a step tells you to.
+3. Check the result against the edge cases before you answer.
+
+## Procedure
+
+1. Collect the inputs this skill requires. If one is missing, ask for it before drafting.
+2. Apply the detailed rules in [references/REFERENCE.md](references/REFERENCE.md).
+3. Produce the deliverable from [assets/example-template.md](assets/example-template.md). Replace every placeholder.
+
+## Edge cases
+
+- Missing required input: ask, do not invent it.
+- A different skill in this pack fits the request more closely: use that skill.
+- The user asks for a channel this skill does not cover: say so and stop.
+
+## Examples
+
+**Input:** A founder wants a short post announcing a beta, for one named platform, with one proof point.
+
+**Output:** One post that leads with the proof point, names the audience, and ends with a single next step. No hashtag block unless the reference says that platform uses one.

@@ -35,8 +35,26 @@ Each skill is a folder with a `SKILL.md` (YAML frontmatter `name` + `description
 3. Keep it generic: no secrets, tokens, personal IDs, or client details.
 4. Open a pull request.
 
-### Planned contributions
-- _Reserved for Chip's skills._
 
 ## License
 See [LICENSE](LICENSE).
+
+```bash
+npx skills add VibeRooster/social-storyteller-skills
+```
+
+Install one skill for one agent:
+
+```bash
+npx skills add VibeRooster/social-storyteller-skills --skill <skill-name> -a cursor
+```
+
+Use `-g` to install for every project. Agent names and install paths are listed in the [skills CLI agent table](https://github.com/vercel-labs/skills/blob/main/docs/agents.md).
+
+Check the catalog locally:
+
+```bash
+python3 scripts/skills.py validate
+```
+
+See [AGENTS.md](AGENTS.md) for the authoring rules.

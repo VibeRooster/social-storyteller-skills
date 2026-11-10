@@ -3,7 +3,9 @@
 
 Usage:
   python3 scripts/skills.py validate
-  python3 scripts/skills.py new <skill-name> [--category <category>] [--description <text>]
+  python3 scripts/skills.py roles
+  python3 scripts/skills.py catalog
+  python3 scripts/skills.py new <skill-name> --role <role> [--category <category>] [--description <text>]
 """
 
 from __future__ import annotations
@@ -12,13 +14,80 @@ import argparse
 import re
 import shutil
 import sys
+from dataclasses import dataclass
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SKILLS_DIR = ROOT / "skills"
+CATALOG_FILE = SKILLS_DIR / "README.md"
+CATALOG_START = "<!-- catalog:start -->"
+CATALOG_END = "<!-- catalog:end -->"
 TEMPLATE_DIR = ROOT / "templates" / "skill-template"
 NAME_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
-PLACEHOLDER_MARKERS = ("your-skill-name", "Replace this")
+PLACEHOLDER_MARKERS = ("your-skill-name", "your-role", "Replace this")
+
+
+@dataclass(frozen=True)
+class Role:
+    slug: str
+    title: str
+    phase: str
+    owns: str
+
+
+PHASES = ("Pre-production", "Production", "Post-production", "Distribution")
+ROLES = (
+    Role(
+        "producer",
+        "Producer",
+        "Pre-production",
+        "owns the brief: the goal, audience, platforms, budget, schedule, and sign-off, "
+        "and keeps a series on strategy",
+    ),
+    Role(
+        "director",
+        "Director",
+        "Pre-production",
+        "sets the creative vision: the concept, treatment, tone, story beats, storyboards, "
+        "shot lists, and notes to talent",
+    ),
+    Role(
+        "copywriter",
+        "Copywriter",
+        "Pre-production",
+        "writes every word, heard or read: hooks, scripts, voiceover, dialogue, titles, captions, "
+        "on-screen text, thumbnail text, descriptions, and calls to action",
+    ),
+    Role(
+        "cinematographer",
+        "Cinematographer",
+        "Production",
+        "designs the image: locations, sets, props, wardrobe, framing, camera movement, lenses, "
+        "lighting, and prompts for generated footage",
+    ),
+    Role(
+        "graphics",
+        "Graphics",
+        "Post-production",
+        "designs the graphic elements: title design, animated type, lower thirds, end cards, "
+        "motion graphics, thumbnails, cover frames, caption styling, logo bugs, and overlays",
+    ),
+    Role(
+        "editor",
+        "Editor",
+        "Post-production",
+        "builds the finished cut: selects, structure, pacing, color grade, music, sound effects, "
+        "the mix, cutdowns, and versions for each aspect ratio",
+    ),
+    Role(
+        "publisher",
+        "Publisher",
+        "Distribution",
+        "ships the finished piece: export specs, platform delivery, posting schedule, and "
+        "performance review",
+    ),
+)
+ROLE_BY_SLUG = {role.slug: role for role in ROLES}
 RESERVED_NAME_WORDS = ("anthropic", "claude")
 KNOWN_FRONTMATTER = {
     "name",
@@ -146,6 +215,39 @@ def linked_paths(body: str) -> list[str]:
     return found
 
 
+def folder_role(skill_file: Path) -> str:
+    parts = skill_file.relative_to(SKILLS_DIR).parts
+    return parts[0] if len(parts) > 2 else ""
+
+
+def metadata_role(data: dict) -> str:
+    metadata = data.get("metadata", {})
+    if not isinstance(metadata, dict):
+        return ""
+    return str(metadata.get("role", "")).strip()
+
+
+def check_role(skill_file: Path, data: dict, body: str) -> list[str]:
+    errors: list[str] = []
+    folder = folder_role(skill_file)
+    role = metadata_role(data)
+    if not folder:
+        errors.append("must sit in a role folder: skills/<role>/<skill-name>/SKILL.md")
+    elif folder not in ROLE_BY_SLUG:
+        errors.append(
+            f"folder {folder!r} is not a role; run `python3 scripts/skills.py roles`"
+        )
+    if not role:
+        errors.append("metadata.role is required")
+    elif role not in ROLE_BY_SLUG:
+        errors.append(f"metadata.role {role!r} is not a role; run `python3 scripts/skills.py roles`")
+    elif folder in ROLE_BY_SLUG and role != folder:
+        errors.append(f"metadata.role {role!r} must match the role folder {folder!r}")
+    if not re.search(r"^## Role\s*$", body, flags=re.MULTILINE):
+        errors.append("add a `## Role` section that tells the agent which role it plays")
+    return errors
+
+
 def validate_skill(skill_file: Path) -> tuple[list[str], list[str]]:
     errors: list[str] = []
     warnings: list[str] = []
@@ -190,6 +292,7 @@ def validate_skill(skill_file: Path) -> tuple[list[str], list[str]]:
                 errors.append(f"{relative}: metadata.{meta_key} must be a string")
         if metadata.get("internal", "").lower() == "true":
             warnings.append(f"{relative}: hidden from default installs (metadata.internal)")
+    errors.extend(f"{relative}: {issue}" for issue in check_role(skill_file, data, body))
     line_count = text.count("\n") + (0 if text.endswith("\n") else 1)
     if line_count > 500:
         errors.append(f"{relative}: SKILL.md is {line_count} lines; keep it under 500")
@@ -230,14 +333,82 @@ def iter_skills() -> list[Path]:
     return sorted(SKILLS_DIR.rglob("SKILL.md"))
 
 
+def skills_by_role() -> dict[str, list[tuple[str, Path]]]:
+    grouped: dict[str, list[tuple[str, Path]]] = {role.slug: [] for role in ROLES}
+    for skill_file in iter_skills():
+        try:
+            frontmatter, _ = split_frontmatter(skill_file.read_text(encoding="utf-8"), skill_file)
+            data = parse_frontmatter(frontmatter, skill_file)
+        except SkillFormatError:
+            continue
+        role = folder_role(skill_file)
+        if role in grouped:
+            name = str(data.get("name", "")).strip() or skill_file.parent.name
+            grouped[role].append((name, skill_file.parent.relative_to(SKILLS_DIR)))
+    return grouped
+
+
+def render_catalog() -> str:
+    grouped = skills_by_role()
+    lines = [CATALOG_START, ""]
+    for phase in PHASES:
+        lines += [f"### {phase}", "", "| Role | Owns | Skills |", "| --- | --- | --- |"]
+        for role in ROLES:
+            if role.phase != phase:
+                continue
+            entries = sorted(grouped[role.slug])
+            title = f"[{role.title}]({role.slug}/)" if entries else role.title
+            skills = ", ".join(f"[`{name}`]({path.as_posix()}/)" for name, path in entries)
+            owns = role.owns[0].upper() + role.owns[1:]
+            lines.append(f"| {title} | {owns}. | {skills or '—'} |")
+        lines.append("")
+    lines.append(CATALOG_END)
+    return "\n".join(lines)
+
+
+def catalog_text() -> str:
+    text = CATALOG_FILE.read_text(encoding="utf-8")
+    start = text.find(CATALOG_START)
+    end = text.find(CATALOG_END)
+    if start == -1 or end == -1 or end < start:
+        fail(f"{CATALOG_FILE.relative_to(ROOT)} needs {CATALOG_START} and {CATALOG_END} markers")
+    return text[:start] + render_catalog() + text[end + len(CATALOG_END) :]
+
+
+def command_catalog(_: argparse.Namespace) -> None:
+    CATALOG_FILE.write_text(catalog_text(), encoding="utf-8")
+    print(f"Updated {CATALOG_FILE.relative_to(ROOT)}")
+
+
+def command_roles(_: argparse.Namespace) -> None:
+    for phase in PHASES:
+        print(phase)
+        for role in ROLES:
+            if role.phase == phase:
+                print(f"  {role.slug:<20} {role.title} {role.owns}")
+
+
 def command_validate(_: argparse.Namespace) -> None:
     skills = iter_skills()
     errors: list[str] = []
     warnings: list[str] = []
+    seen_names: dict[str, Path] = {}
     for skill in skills:
         skill_errors, skill_warnings = validate_skill(skill)
         errors.extend(skill_errors)
         warnings.extend(skill_warnings)
+        name = skill.parent.name
+        if name in seen_names:
+            errors.append(
+                f"{skill.relative_to(ROOT)}: skill name {name!r} is also used by "
+                f"{seen_names[name].relative_to(ROOT)}; installers keep only one"
+            )
+        else:
+            seen_names[name] = skill
+    if CATALOG_FILE.read_text(encoding="utf-8") != catalog_text():
+        errors.append(
+            f"{CATALOG_FILE.relative_to(ROOT)} is out of date; run `python3 scripts/skills.py catalog`"
+        )
     for warning in warnings:
         print(f"warning: {warning}")
     if errors:
@@ -254,16 +425,20 @@ def command_new(args: argparse.Namespace) -> None:
     name_errors = check_name(args.name)
     if name_errors:
         fail("; ".join(name_errors))
+    role = ROLE_BY_SLUG[args.role]
+    destination = SKILLS_DIR / role.slug
     category = args.category
     if category:
         category_errors = check_name(category, "category")
         if category_errors:
             fail("; ".join(category_errors))
-        destination = SKILLS_DIR / category / args.name
-    else:
-        destination = SKILLS_DIR / args.name
+        destination /= category
+    destination /= args.name
     if destination.exists():
         fail(f"{destination.relative_to(ROOT)} already exists")
+    existing = [skill for skill in iter_skills() if skill.parent.name == args.name]
+    if existing:
+        fail(f"skill name {args.name!r} is already used by {existing[0].relative_to(ROOT)}")
     if not TEMPLATE_DIR.is_dir():
         fail(f"missing template: {TEMPLATE_DIR.relative_to(ROOT)}")
     shutil.copytree(TEMPLATE_DIR, destination)
@@ -271,6 +446,12 @@ def command_new(args: argparse.Namespace) -> None:
     skill_file = destination / "SKILL.md"
     text = example.read_text(encoding="utf-8")
     text = text.replace("name: your-skill-name", f"name: {args.name}", 1)
+    text = text.replace("role: your-role", f"role: {role.slug}", 1)
+    text = text.replace(
+        "Work as the Your Role.",
+        f"Work as the {role.title}. The {role.title} {role.owns}.",
+        1,
+    )
     title = args.name.replace("-", " ").title()
     text = text.replace("# Your Skill Name", f"# {title}", 1)
     if args.description:
@@ -284,6 +465,7 @@ def command_new(args: argparse.Namespace) -> None:
         )
     skill_file.write_text(text, encoding="utf-8")
     example.unlink()
+    CATALOG_FILE.write_text(catalog_text(), encoding="utf-8")
     print(f"Created {skill_file.relative_to(ROOT)}")
     print("Edit the description, procedure, reference, and asset, then run:")
     print("  python3 scripts/skills.py validate")
@@ -294,9 +476,19 @@ def build_parser() -> argparse.ArgumentParser:
     subcommands = parser.add_subparsers(dest="command", required=True)
     validate = subcommands.add_parser("validate", help="check every published skill")
     validate.set_defaults(func=command_validate)
-    create = subcommands.add_parser("new", help="copy the skill template into skills/")
+    roles = subcommands.add_parser("roles", help="list the production roles a skill can play")
+    roles.set_defaults(func=command_roles)
+    catalog = subcommands.add_parser("catalog", help="regenerate the role catalog in skills/README.md")
+    catalog.set_defaults(func=command_catalog)
+    create = subcommands.add_parser("new", help="copy the skill template into skills/<role>/")
     create.add_argument("name", help="skill name, matching the directory that will hold SKILL.md")
-    create.add_argument("--category", help="optional single catalog folder under skills/")
+    create.add_argument(
+        "--role",
+        required=True,
+        choices=list(ROLE_BY_SLUG),
+        help="production role the agent plays when it loads the skill",
+    )
+    create.add_argument("--category", help="optional folder inside the role folder")
     create.add_argument("--description", help="third-person description of what the skill does and when to use it")
     create.set_defaults(func=command_new)
     return parser

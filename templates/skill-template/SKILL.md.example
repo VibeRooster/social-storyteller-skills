@@ -5,9 +5,16 @@ license: MIT
 metadata:
   author: VibeRooster
   version: "0.1.0"
+  role: your-role
 ---
 
 # Your Skill Name
+
+## Role
+
+Work as the Your Role.
+
+Replace this with what this role receives from the rest of the crew, what it delivers, and which role picks up the deliverable next.
 
 ## Do this
 
